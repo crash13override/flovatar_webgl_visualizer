@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>iframe testing</title>
+    <script language="javascript">
+      // This function, or one like it, would be used to communicate with the
+      function UpdateViewer() {
+        const background = document.querySelector("input[name='bg']").value;
+        const parts = document.querySelector("input[name='parts']").value;
+        const style = document.querySelector("select[name='style']").value;
+
+        // Ensure the string input is turned into a number array
+        const parray = parts.split(",").map((s) => Number(s));
+
+        document.getElementById("visualiser").contentWindow.postMessage(
+          {
+            message: "setParts",
+            parts: parray,
+            background: background,
+            style: style,
+          },
+          "*" // Actual URL where this needs to be sent
+        );
+      }
+
+      // https://stackoverflow.com/questions/9249680/how-to-check-if-iframe-is-loaded-or-it-has-a-content
+      function checkIframeLoaded() {
+        // Get a handle to the iframe element
+        var iframe = document.getElementById("visualiser");
+        var iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+
+        // Check if loading is complete
+        if (iframeDoc.readyState == "complete") {
+          console.log("spa ready, setting defaults");
+          UpdateViewer();
+          return;
+        }
+
+        // If we are here, it is not loaded. Set things up so we check   the status again in 100 milliseconds
+        window.setTimeout(checkIframeLoaded, 100);
+      }
+
+      window.addEventListener("load", () => {
+        checkIframeLoaded();
+      });
+    </script>
+  </head>
+  <body>
+    <!-- <input
+      style="width: 80%; height: 2rem"
+      type="text"
+      value="B45H314FxE248N451M425C78&eyeglasses=219&hat=390&accessory=8&background=477"
+    /> -->
+    <!-- 
+      Part numbers to play with:
+        accessory/Knife: 16
+        accessory/Skateboard: 27, 28, 29
+        body/AlienBlue: 34
+        body/<Coloured>: 38, 46, 47, 50, 51, 52, 53, 54, 56, 67
+        body/Zombie: 72
+        mouth/Clown: 423
+        nose/Cat: 449
+        nose/Dog: 452
+        nose/Standard: 455
+        clothing/Jail: 113
+        clothing/WorkerBlue: 210
+        clothing/WorkerGrey: 211
+        clothing/Spacesuit: 158 - 161
+        eyeglasses/Snowboard: 230, 231
+        eyeglasses/Wayfarer: 233, 234, 235, 236, 237
+        eyes/Standard: 266
+        facialHair/Beard: 267, 268, 272
+        facialHair/Handlebar: 267, 267, 268
+        hair/DreadLong: 305
+        hair/DreadLong: 301, 302, 303, 304, 306
+        hat/WinterPomPom: 421, 422
+
+      Naked:
+        38, 455, 423, 266
+
+      Jail dreads:
+        16, 452, 423, 53, 423, 266, 113, 301
+
+      Spaceman beard:
+        51, 449, 423, 266, 161, 230, 268
+
+      Zombie winter skateboarder:
+        72, 423, 29, 266, 421
+
+    -->
+    <div>
+      <input type="text" value="" name="parts" />
+      <input type="text" value="" name="bg" />
+      <select name="style">
+        <option value="toon">Toon</option>
+        <option value="standard">Standard</option>
+        <option value="shiny" default>Shiny</option>
+      </select>
+    </div>
+    <div>
+      <button onclick="UpdateViewer()">Update</button>
+    </div>
+    <iframe
+      id="visualiser"
+      scrolling="no"
+      style="
+        width: 100%;
+        height: 100%;
+        aspect-ratio: 1;
+        overflow: hidden;
+        border: 0;
+      "
+      src="/"
+    ></iframe>
+  </body>
+</html>

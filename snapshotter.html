@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>iframe testing</title>
+    <script language="javascript">
+      // This function, or one like it, would be used to communicate with the
+      function UpdateViewer() {
+        const background = document.querySelector("input[name='bg']").value;
+        const parts = document.querySelector("input[name='parts']").value;
+        const style = document.querySelector("select[name='style']").value;
+
+        // Ensure the string input is turned into a number array
+        const parray = parts.split(",").map((s) => Number(s));
+
+        window.postMessage(
+          {
+            message: "setParts",
+            parts: parray,
+            background: background,
+            style: style,
+          },
+          "*" // Actual URL where this needs to be sent
+        );
+      }
+
+      // https://stackoverflow.com/questions/9249680/how-to-check-if-iframe-is-loaded-or-it-has-a-content
+      function checkIframeLoaded() {
+        // Get a handle to the iframe element
+        var iframe = document.getElementById("visualiser");
+        var iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+
+        // Check if loading is complete
+        if (iframeDoc.readyState == "complete") {
+          console.log("spa ready, setting defaults");
+          UpdateViewer();
+          return;
+        }
+
+        // If we are here, it is not loaded. Set things up so we check the status again in 100 milliseconds
+        window.setTimeout(checkIframeLoaded, 100);
+      }
+
+      // window.addEventListener("load", () => {
+      //   checkIframeLoaded();
+      // });
+
+      // utility
+      function diff(arr1, arr2) {
+        return arr1.filter((x) => !arr2.includes(x));
+      }
+
+      // Duplicate code from UpdateViewer
+      const setparts = (parts, style) => {
+        window.postMessage(
+          {
+            message: "setParts",
+            parts: parts,
+            background: "",
+            style: style,
+          },
+          "*" // Actual URL where this needs to be sent
+        );
+      };
+
+      function ScreenCap(e, fname) {
+        console.log("Saving ", fname);
+        // Find the canvas
+        const canvas = document.querySelector("canvas");
+
+        // Make an imaginary link
+        const aLink = document.createElement("a");
+        aLink.download = fname;
+        aLink.href = canvas.toDataURL("image/png");
+
+        // Trigger a click and download on the link
+        document.body.appendChild(aLink);
+        aLink.click();
+      }
+
+      async function asyncForEach(array, callback) {
+        for (let index = 0; index < array.length; index++) {
+          await callback(array[index], index, array);
+        }
+      }
+
+      const waitFor = (ms) => new Promise((r) => setTimeout(r, ms));
+
+      async function LoopCap() {
+        // Default "display" body parts, blank mouth and white body
+        const mannequin = [-1, 67];
+        const style = "shiny";
+        const start = 0;
+
+        const runme = async (id, defaultparts) => {
+          console.log("Loading ", id);
+          setparts([...defaultparts, id], style);
+          await waitFor(200);
+          ScreenCap({}, `${id}.png`);
+          await waitFor(2800);
+        };
+
+        // Mouths don't need the mouth part, where the other parts do
+        const mouths = Array(25)
+          .fill(0)
+          .map((v, k) => k + 423);
+
+        // Bodies don't all need the underlying body part, where other parts do
+        const bodies = Array(39)
+          .fill(0)
+          .map((v, k) => k + 34);
+
+        // Generate everything, and then fix the extras with bodies and mouths
+        // Everything with a starting offset
+        // const everything = Array(477 - start) // 477
+        //   .fill(0)
+        //   .map((v, k) => k + start);
+
+        let everything = Array(477) // 477 parts total
+          .fill(0)
+          .map((v, k) => k + start);
+
+        // Remove mouths and bodies from everything
+        everything = diff(everything, mouths);
+        everything = diff(everything, bodies);
+
+        await asyncForEach(everything, async (id) => {
+          await runme(id, mannequin);
+        });
+
+        await asyncForEach(mouths, async (id) => {
+          await runme(id, [67]);
+        });
+
+        await asyncForEach(bodies, async (id) => {
+          await runme(id, [-1]);
+        });
+      }
+    </script>
+  </head>
+  <body>
+    <div>
+      <input type="text" value="" name="parts" />
+      <input type="text" value="477" name="bg" />
+      <select name="style">
+        <option value="toon" default>Toon</option>
+        <option value="standard">Standard</option>
+        <option value="shiny">Shiny</option>
+      </select>
+      <button onclick="UpdateViewer()">Update</button>
+      <button onclick="LoopCap()">Iterate</button>
+    </div>
+
+    <div id="visualiser" style="width: 1024px; height: 1024px"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

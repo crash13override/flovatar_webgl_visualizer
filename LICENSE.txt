@@ -1,0 +1,9 @@
+# Proprietary Software License
+
+Copyright (c) 2022 - present Plastic Alchemy Ltd
+
+ * This code is licensed non-exclusively to Lab 1’618 Spain S.L..
+ * Permission is hereby granted to Lab 1’618 Spain S.L. to modify and
+   extend this code for the express purpose of maintenance and feature
+   development of this product.
+ * Plastic Alchemy offers no warranty on any 3rd party alterations.
